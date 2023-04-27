@@ -112,9 +112,9 @@ class DataloadingManager:
         test_dataset, val_dataset = random_split(test_dataset, [int((1-val_ratio)*len(test_dataset)),
                                                                 int(val_ratio*len(test_dataset))])
 
-        print(f"Tamanho do dataset de treino: {len(train_dataset)}")
-        print(f"Tamanho do dataset de teste: {len(test_dataset)}")
-        print(f"Tamanho do dataset de validação: {len(val_dataset)}")
+        print(f"Size of training set: {len(train_dataset)}")
+        print(f"Size of test set: {len(test_dataset)}")
+        print(f"Size of validation set: {len(val_dataset)}\n")
 
         train_dataloader = DataLoader(dataset=train_dataset, batch_size=batch_size, 
                                         shuffle=True, num_workers=num_workers)
@@ -161,9 +161,9 @@ class DataloadingManager:
                                         num_samples = ds_size,
                                         replacement = True)
 
-        print(f"Tamanho do dataset de treino: {len(train_dataset)}")
-        print(f"Tamanho do dataset de teste: {len(test_dataset)}")
-        print(f"Tamanho do dataset de validação: {len(val_dataset)}")
+        print(f"Size of training set: {len(train_dataset)}")
+        print(f"Size of test set: {len(test_dataset)}")
+        print(f"Size of validation set: {len(val_dataset)}\n")
 
         train_dataloader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, 
                                         sampler=sampler, num_workers=NUM_WORKERS)

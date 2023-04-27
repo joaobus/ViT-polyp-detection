@@ -61,7 +61,6 @@ class ViTClassifier:
         return np.array([accuracy, precision, recall, f1, auroc])
     
     
-        
     def fit(self, train_dataloader, val_dataloader, log: bool = True):
         
         if log:
@@ -152,7 +151,6 @@ class ViTClassifier:
         self.model.load_state_dict(torch.load(r'out\best_model.pt')['model_state_dict'])
         
 
-    
     def predict(self, dl):
         '''
         Predicts labels. Should be called after fitting
@@ -169,7 +167,6 @@ class ViTClassifier:
                 y_true.extend(label.cpu().numpy())
         
         return out, y_true
-    
     
     
     def evaluate(self, test_dataloader):
@@ -195,7 +192,7 @@ class ViTClassifier:
                 test_output = self.model(data)[:,0]
                 test_loss = self.criterion(test_output, label.float())
 
-                test_loss += test_loss.float() / len(test_dataloader)
+                test_loss += test_loss.item() / len(test_dataloader)
                 test_metrics = test_metrics + self.get_metrics(test_output, label) / len(test_dataloader)
 
                 out.extend(test_output.cpu().numpy())

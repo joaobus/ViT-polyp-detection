@@ -58,7 +58,7 @@ class ViTClassifier:
         f1 = binary_f1_score(output, label, threshold = self.training_configs['threshold']).float() 
         auroc = binary_auroc(output, label).float()
         
-        return np.array([accuracy, precision, recall, f1, auroc])
+        return np.array([accuracy.cpu(), precision.cpu(), recall.cpu(), f1.cpu(), auroc.cpu()])
     
     
     def fit(self, train_dataloader, val_dataloader, log: bool = True):

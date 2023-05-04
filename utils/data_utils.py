@@ -46,25 +46,25 @@ class DataloadingManager:
             '''
             Standard dataset
             '''
-            self.path = r'datasets\original_dataset'
+            self.path = 'datasets/original_dataset'
 
         elif dataset_name == 'cp-child-specnorm':
             '''
             Dataset with specular highlights removed
             '''
-            self.path = r'datasets\preprocessed_dataset_specnorm'
+            self.path = 'datasets/preprocessed_dataset_specnorm'
 
         elif dataset_name == 'cp-child-specnorm-lightnorm':
             '''
             Dataset with both specular highlights removal and lightning normalization preprocessing steps applied 
             '''
-            self.path = r'datasets\preprocessed_dataset_specnorm'
+            self.path = 'datasets/preprocessed_dataset_specnorm'
 
         elif dataset_name == 'cp-child-subsampled':
             '''
             Dataset with an equal number of polyp and non-polyp images
             '''
-            self.path = r'datasets\subsampled_dataset'
+            self.path = 'datasets/subsampled_dataset'
 
     
 
@@ -88,8 +88,8 @@ class DataloadingManager:
         Util for the 'cp-child' dataset. Concatenates and loads datasets CP-CHILD-A and CP-CHILD-B
         Only used if self.dataset_name == 'cp-child'
         '''
-        path_a = r'datasets\original_dataset\CP-CHILD-A'
-        path_b = r'datasets\original_dataset\CP-CHILD-B'
+        path_a = 'datasets/original_dataset/CP-CHILD-A'
+        path_b = 'datasets/original_dataset/CP-CHILD-B'
 
         train_path_a = os.path.join(path_a,'Train')
         test_path_a = os.path.join(path_a,'Test')

@@ -1,6 +1,7 @@
 import torch 
 import wandb
 import numpy as np
+import os
 
 from tqdm import tqdm
 from model.modeling import VisionTransformer
@@ -16,10 +17,11 @@ class ViTClassifier:
     '''
     General purpose class for building, fitting, predicting and evaluating
     '''
-    def __init__(self, get_test_config: bool = False):
-        self.model_configs = get_model_config(get_test_config)
+    def __init__(self, get_test_model: bool = False, get_test_config: bool = False):
+        self.model_configs = get_model_config(get_test_model)
         self.training_configs = get_training_config(get_test_config)
         self.loading_configs = get_loading_config()
+        self.resume_epoch = 0
         
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("Using device: ", device, f"({torch.cuda.get_device_name(device)})" if torch.cuda.is_available() else "") 
@@ -48,7 +50,10 @@ class ViTClassifier:
         
 
     def load_pretrained(self, path):
-        self.model.load_state_dict(torch.load(path, map_location=self.device)['model_state_dict'])
+        self.checkpoint = torch.load(path, map_location=self.device)
+        self.model.load_state_dict(self.checkpoint['model_state_dict'])
+        self.optimizer.load_state_dict(self.checkpoint['optimizer_state_dict'])
+        self.resume_epoch = self.checkpoint['epoch']
 
     
     def get_metrics(self, output: torch.Tensor, label: torch.Tensor):                
@@ -61,8 +66,20 @@ class ViTClassifier:
         return np.array([accuracy.cpu(), precision.cpu(), recall.cpu(), f1.cpu(), auroc.cpu()])
     
     
-    def fit(self, train_dataloader, val_dataloader, log: bool = True):
+    def fit(self, train_dataloader, val_dataloader, 
+            log: bool = True, resume_training: bool = False, 
+            save_path: str = 'out/best_model.pt'):
+        '''
+        Fits the model to the training data.
+        Parameters:
+            log: whether or not to log the run to wandb
+            resume_training: whether to start a new wandb run (False) or resume the previous run (True)
+            save_path: path to save the model to
+        '''
         
+        if not os.path.exists(os.path.dirname(save_path)):
+            os.makedirs(os.path.dirname(save_path))
+
         if log:
             wandb.login()
     
@@ -81,12 +98,18 @@ class ViTClassifier:
                 "weight_decay": self.training_configs['weight_decay'],
                 "pos_threshold": self.training_configs['threshold'],
                 "lr_patience": self.training_configs['lr_patience']
-                }
+                },
+
+                resume = resume_training
             )
 
         best_val_loss = np.inf
 
-        for epoch in range(self.training_configs['num_epochs']):
+        if self.resume_epoch > 0:
+            print(f'Resuming training from epoch {self.resume_epoch}:\n\n')
+            best_val_loss = self.checkpoint['best_val_loss']
+
+        for epoch in range(self.training_configs['num_epochs'] - self.resume_epoch):
             accuracy = loss = precision = 0.
             recall = f1 = auroc = 0.
             
@@ -134,21 +157,22 @@ class ViTClassifier:
                            "auroc": train_metrics[4], "val_auroc": val_metrics[4]})
 
             print(f"lr = {curr_lr}")
-            print(f"Epoch : {epoch+1} - loss : {loss:.4f} - acc: {train_metrics[0]:.4f} - val_loss : {val_loss:.4f} - val_acc: {val_metrics[0]:.4f}\n")
+            print(f"Epoch : {epoch+1+self.resume_epoch} - loss : {loss:.4f} - acc: {train_metrics[0]:.4f} - val_loss : {val_loss:.4f} - val_acc: {val_metrics[0]:.4f}\n")
             
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
-                print(f"\nSaving best model for epoch: {epoch+1}\n")
+                print(f"\nSaving best model for epoch: {epoch+1+self.resume_epoch}\n")
                 torch.save({
-                    'epoch': epoch+1,
+                    'epoch': epoch+1+self.resume_epoch,
                     'model_state_dict': self.model.state_dict(),
                     'optimizer_state_dict': self.optimizer.state_dict(),
                     'loss': self.criterion,
-                    }, r'out\best_model.pt')
+                    'best_val_loss': best_val_loss
+                    }, save_path)
 
             self.scheduler.step(val_loss)   
 
-        self.model.load_state_dict(torch.load(r'out\best_model.pt')['model_state_dict'])
+        self.model.load_state_dict(torch.load(save_path)['model_state_dict'])
         
 
     def predict(self, dl):
@@ -192,7 +216,7 @@ class ViTClassifier:
                 test_output = self.model(data)[:,0]
                 test_loss = self.criterion(test_output, label.float())
 
-                test_loss += test_loss.item() / len(test_dataloader)
+                test_loss += test_loss.cpu().numpy() / len(test_dataloader)
                 test_metrics = test_metrics + self.get_metrics(test_output, label) / len(test_dataloader)
 
                 out.extend(test_output.cpu().numpy())

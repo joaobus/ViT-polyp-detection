@@ -1,3 +1,6 @@
+# Command output
+nohup.out
+
 # Wandb log file
 wandb/
 

@@ -111,13 +111,25 @@ class DataloadingManager:
 
         test_dataset, val_dataset = random_split(test_dataset, [int((1-val_ratio)*len(test_dataset)),
                                                                 int(val_ratio*len(test_dataset))])
+        
+        ds_size_a = len(train_dataset_a)
+        counts_a = torch.unique(torch.Tensor(train_dataset_a.targets), return_counts=True)[1]
+        sample_weights_a = [1-(counts_a[i]/ds_size_a) for i in train_dataset_a.targets]
+
+        ds_size_b = len(train_dataset_b)
+        counts_b = torch.unique(torch.Tensor(train_dataset_b.targets), return_counts=True)[1]
+        sample_weights_b = [1-(counts_b[i]/ds_size_b) for i in train_dataset_b.targets]
+
+        sampler = WeightedRandomSampler(weights = sample_weights_a + sample_weights_b, 
+                                        num_samples = ds_size_a + ds_size_b,
+                                        replacement = True)
 
         print(f"Size of training set: {len(train_dataset)}")
         print(f"Size of test set: {len(test_dataset)}")
         print(f"Size of validation set: {len(val_dataset)}\n")
 
         train_dataloader = DataLoader(dataset=train_dataset, batch_size=batch_size, 
-                                        shuffle=True, num_workers=num_workers)
+                                        sampler=sampler, num_workers=num_workers)
         test_dataloader = DataLoader(dataset=test_dataset, batch_size=batch_size, 
                                         shuffle=True, num_workers=num_workers)
         val_dataloader = DataLoader(dataset=val_dataset, batch_size=batch_size, 

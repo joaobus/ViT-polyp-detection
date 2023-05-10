@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -6,6 +7,10 @@ import sklearn.metrics as metrics
 from sklearn.metrics import confusion_matrix
 
 def plot_confusion_matrix(output, y_true, save_path):
+    
+    if not os.path.exists(os.path.dirname(save_path)):
+            os.makedirs(os.path.dirname(save_path))
+
     classes = ['0','1']
     
     y_pred = np.round(output)
@@ -25,6 +30,9 @@ def plot_curves(output, y_true, save_path):
     '''
     Plots Receiver Operating Characteristic and Precision-Recall curves
     '''
+    if not os.path.exists(os.path.dirname(save_path)):
+            os.makedirs(os.path.dirname(save_path))
+
     fpr, tpr, _ = metrics.roc_curve(y_true, output)
     roc_auc = metrics.auc(fpr, tpr)
     precision, recall, _ = metrics.precision_recall_curve(y_true, output)

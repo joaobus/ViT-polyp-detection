@@ -36,7 +36,7 @@ def get_training_config(get_test_config: bool = False):
         N_EPOCHS = 3
     else:
         WEIGHT_DECAY = 1e-9
-        N_EPOCHS = 300
+        N_EPOCHS = 500
 
     config = {'num_epochs':N_EPOCHS, 'lr':LR, 'weight_decay':WEIGHT_DECAY,
               'threshold':THRESHOLD, 'lr_patience':LR_PATIENCE}

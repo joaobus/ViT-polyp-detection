@@ -1,15 +1,15 @@
 ## Model configs
-def get_model_config(get_test_config: bool = False):
+def get_vit_config(get_test_model: bool = False):
     # Input parameters
-    H=224
-    W=224
+    H=256
+    W=256
     C=3
     P=16
     EMB_SIZE = (P**2)*C
     return_attn_weights = True
     
     # Model parameters    
-    if get_test_config:
+    if get_test_model:
         DROP_RATE = 0.
         NUM_HEADS = 1
         NUM_BLOCKS = 1
@@ -18,7 +18,7 @@ def get_model_config(get_test_config: bool = False):
         NUM_HEADS = 8
         NUM_BLOCKS = 6
 
-    config = {'h':H,'w':W,'c':C,'patch_size':P,'emb_size':EMB_SIZE,
+    config = {'architecure':'ViT','h':H,'w':W,'c':C,'patch_size':P,'emb_size':EMB_SIZE,
               'drop_rate':DROP_RATE,'num_heads':NUM_HEADS,'num_blocks':NUM_BLOCKS,
               'return_attn_weights':return_attn_weights}
     
@@ -42,7 +42,6 @@ def get_training_config(get_test_config: bool = False):
               'threshold':THRESHOLD, 'lr_patience':LR_PATIENCE}
 
     return config
-
 
 
 ## Loading configs

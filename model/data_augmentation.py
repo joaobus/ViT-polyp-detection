@@ -2,7 +2,7 @@ import torch.nn as nn
 import torchvision.transforms as transforms
 
 class DataAugmentation(nn.Module):
-    def __init__(self,img_size: int = 224):
+    def __init__(self,img_size: int = 256):
         super().__init__()
         self.transforms = transforms.Compose(
             [

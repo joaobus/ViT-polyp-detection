@@ -4,42 +4,29 @@ import numpy as np
 import os
 
 from tqdm import tqdm
-from model.modeling import VisionTransformer
 from model.data_augmentation import DataAugmentation 
-from utils.configs import get_model_config, get_training_config, get_loading_config
+from utils.configs import get_training_config, get_loading_config
 from torch.optim import Adam
 from torch.nn import BCELoss
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torcheval.metrics.functional import binary_accuracy, binary_f1_score, binary_precision, binary_recall, binary_auroc
 
 
-class ViTClassifier:
+class BaseClassifier:
     '''
     General purpose class for building, fitting, predicting and evaluating
     '''
-    def __init__(self, get_test_model: bool = False, get_test_config: bool = False):
-        self.model_configs = get_model_config(get_test_model)
+    def __init__(self, model, model_configs: dict = {}, get_test_config: bool = False):
+        self.model_configs = model_configs
         self.training_configs = get_training_config(get_test_config)
         self.loading_configs = get_loading_config()
         self.resume_epoch = 0
-        
+
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("Using device: ", device, f"({torch.cuda.get_device_name(device)})" if torch.cuda.is_available() else "") 
         
         self.device = device
-
-        self.model = VisionTransformer(in_channels = self.model_configs['c'],
-                                        patch_size = self.model_configs['patch_size'],
-                                        emb_size = self.model_configs['emb_size'],
-                                        img_size = self.model_configs['h'],
-                                        drop_p = self.model_configs['drop_rate'],
-                                        forward_drop_p= self.model_configs['drop_rate'],
-                                        num_heads = self.model_configs['num_heads'],
-                                        n_blocks = self.model_configs['num_blocks'],
-                                        n_classes = 1,
-                                        device = self.device,
-                                        return_attn_weights=self.model_configs['return_attn_weights']
-                                        ).to(self.device)
+        self.model = model.to(self.device)
 
         self.criterion = BCELoss()
         self.optimizer = Adam(self.model.parameters(), 
@@ -68,7 +55,7 @@ class ViTClassifier:
     
     def fit(self, train_dataloader, val_dataloader, 
             log: bool = True, resume_training: bool = False, 
-            save_path: str = 'out/best_model.pt'):
+            save_model: bool = True, save_path: str = 'out/best_model.pt'):
         '''
         Fits the model to the training data.
         Parameters:
@@ -89,16 +76,12 @@ class ViTClassifier:
                 config={
                 "learning_rate": self.training_configs['lr'],
                 "batch_size": self.loading_configs['batch_size'],
-                "architecture": "ViT",
                 "dataset": "CP-CHILD",
                 "epochs": self.training_configs['num_epochs'],
-                "dropout_rate": self.model_configs['drop_rate'],
-                "num_heads": self.model_configs['num_heads'],
-                "num_blocks": self.model_configs['num_blocks'],
                 "weight_decay": self.training_configs['weight_decay'],
                 "pos_threshold": self.training_configs['threshold'],
                 "lr_patience": self.training_configs['lr_patience']
-                },
+                } | self.model_configs,
 
                 resume = resume_training
             )
@@ -159,7 +142,7 @@ class ViTClassifier:
             print(f"lr = {curr_lr}")
             print(f"Epoch : {epoch+1+self.resume_epoch} - loss : {loss:.4f} - acc: {train_metrics[0]:.4f} - val_loss : {val_loss:.4f} - val_acc: {val_metrics[0]:.4f}\n")
             
-            if val_loss < best_val_loss:
+            if save_model and val_loss < best_val_loss:
                 best_val_loss = val_loss
                 print(f"\nSaving best model for epoch: {epoch+1+self.resume_epoch}\n")
                 torch.save({
@@ -171,8 +154,9 @@ class ViTClassifier:
                     }, save_path)
 
             self.scheduler.step(val_loss)   
-
-        self.model.load_state_dict(torch.load(save_path)['model_state_dict'])
+        
+        if save_model:
+            self.model.load_state_dict(torch.load(save_path)['model_state_dict'])
         
 
     def predict(self, dl):
@@ -230,7 +214,7 @@ class ViTClassifier:
         print(f"F1 Score: {test_metrics[3]}")
         print(f"Area under ROC curve: {test_metrics[4]}\n")
 
-        metrics = {'loss': test_loss,
+        metrics = {'loss': test_loss.item(), # type:ignore
                    'acc': test_metrics[0],
                    'precision': test_metrics[1],
                    'recall': test_metrics[2],

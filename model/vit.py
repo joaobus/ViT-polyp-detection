@@ -11,7 +11,7 @@ class PatchEmbedding(nn.Module):
                  in_channels: int = 3, 
                  patch_size: int = 16, 
                  emb_size: int = 768, 
-                 img_size: int = 224,
+                 img_size: int = 256,
                  device = torch.device('cpu') ):
         self.patch_size = patch_size
         self.device = device
@@ -146,7 +146,7 @@ class VisionTransformer(nn.Module):
                in_channels: int = 3,
                patch_size: int = 16,
                emb_size: int = 768,
-               img_size: int = 224,
+               img_size: int = 256,
                drop_p: float = 0.,
                forward_drop_p: float = 0.,
                num_heads: int = 8,

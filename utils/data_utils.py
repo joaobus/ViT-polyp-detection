@@ -96,7 +96,7 @@ class DataloadingManager:
         train_path_b = os.path.join(path_b,'Train')
         test_path_b = os.path.join(path_b,'Test')
 
-        transform = transforms.Compose([transforms.Resize((224, 224)),
+        transform = transforms.Compose([transforms.Resize((256, 256)),
                                         transforms.ToTensor(),
                                         transforms.Normalize(self.mean, self.std)
                                         ])
@@ -150,7 +150,7 @@ class DataloadingManager:
         if self.dataset_name == 'cp-child':
             return self.__load_standard_dataset(BATCH_SIZE, VAL_RATIO, NUM_WORKERS)
         
-        transform = transforms.Compose([transforms.Resize((224, 224)),
+        transform = transforms.Compose([transforms.Resize((256, 256)),
                                         transforms.ToTensor(),
                                         transforms.Normalize(self.mean, self.std)
                                         ])

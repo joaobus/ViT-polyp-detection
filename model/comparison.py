@@ -1,32 +1,42 @@
 import torch.nn as nn
 import torchvision.models as models
-from utils.configs import get_vit_config
 
 
-class ComparisonModel(nn.Module):
-    def __init__(self, 
-                 base_model, 
-                 n_classes: int = 1, 
-                 drop_p: float = 0.):
-        super().__init__()
-        self.base = base_model
-        self.out = nn.Sequential(
-            nn.Dropout(drop_p),
-            nn.Linear(1000,n_classes),
-            nn.Sigmoid()
-        )
+# class ComparisonModel(nn.Module):
+#     def __init__(self, 
+#                  base_model, 
+#                  n_classes: int = 1):
+#         super().__init__()
+#         base_model.fc = nn.Linear(base_model.fc.in_features, n_classes)
+#         self.base = base_model
+#         self.activation = nn.Sigmoid()
     
-    def forward(self, x):
-        x = self.base(x)
-        return self.out(x)
+#     def forward(self, x):
+#         x = self.base(x)
+#         return self.activation(x)
 
 
-# Models
-def vgg16():
-    return ComparisonModel(models.vgg16_bn(), drop_p=0.6) 
+# # Models
+# def resnet18():
+#     return ComparisonModel(models.resnet18())
 
-def resnet50():
-    return ComparisonModel(models.resnet50(), drop_p=0.6)
+# def resnet34():
+#     return ComparisonModel(models.resnet34())
 
-def resnet101():
-    return ComparisonModel(models.resnet101(), drop_p=0.6)
+
+def build_model(base):
+    in_features = base.fc.in_features
+    base.fc = nn.Linear(in_features, 1)
+    model = nn.Sequential(
+        base,
+        nn.Sigmoid()
+    )
+    return model
+
+
+def resnet18():
+    return build_model(models.resnet18())
+
+def resnet34():
+    return build_model(models.resnet34())
+

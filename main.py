@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from model.vit import VisionTransformer
-from model.comparison import vgg16, resnet50, resnet101
+from model.comparison import resnet18, resnet34
 from utils.data_utils import DataloadingManager
 from utils.eval_utils import plot_confusion_matrix, plot_curves
 from utils.configs import get_vit_config
@@ -14,30 +14,7 @@ np.random.seed(0)
 torch.manual_seed(0)
 
 
-def train_model(model_name: str = 'vit', dataset: str = 'cp-child', out_dir: str = 'out/model'):
-    models = ['vit','vgg16','resnet50','resnet101']
-    assert model_name in models, f'model_name should be one of {models}'
-
-    model_configs = get_vit_config(get_test_model=False)
-
-    if model_name == 'vit':
-        model = VisionTransformer(in_channels = model_configs['c'],
-                            patch_size = model_configs['patch_size'],
-                            emb_size = model_configs['emb_size'],
-                            img_size = model_configs['h'],
-                            drop_p = model_configs['drop_rate'],
-                            forward_drop_p= model_configs['drop_rate'],
-                            num_heads = model_configs['num_heads'],
-                            n_blocks = model_configs['num_blocks'],
-                            n_classes = 1,
-                            device = torch.device("cuda" if torch.cuda.is_available() else "cpu"),
-                            return_attn_weights=model_configs['return_attn_weights'])
-    elif model_name == 'vgg16':
-        model = vgg16()
-    elif model_name == 'resnet50':
-        model = resnet50()
-    elif model_name == 'resnet101':
-        model = resnet101()
+def train_model(model, model_name: str = '-', dataset: str = 'cp-child', out_dir: str = 'out/model'):
     
     train_dataloader, test_dataloader, val_dataloader = DataloadingManager(dataset_name=dataset).get_dataloaders()
 
@@ -61,13 +38,27 @@ def train_model(model_name: str = 'vit', dataset: str = 'cp-child', out_dir: str
 
 
 if __name__ == '__main__':
-    # train_model(model_name='vit', dataset='cp-child-specnorm', out_dir='out/ViT_specnorm')
-    # train_model(model_name='vit', dataset='cp-child', out_dir='out/ViT_no_preprocessing')
 
-    # train_model(model_name='resnet50', dataset='cp-child-specnorm', out_dir='out/ResNet50_specnorm')
-    # train_model(model_name='resnet50', dataset='cp-child', out_dir='out/ResNet50_no_preprocessing')
+    model_configs = get_vit_config(get_test_model=False)
 
-    train_model(model_name='resnet101', dataset='cp-child-specnorm', out_dir='out/ResNet101_specnorm')
-    train_model(model_name='resnet101', dataset='cp-child', out_dir='out/ResNet101_no_preprocessing')
-    train_model(model_name='vgg16', dataset='cp-child-specnorm', out_dir='out/VGG16_specnorm')
-    train_model(model_name='vgg16', dataset='cp-child', out_dir='out/VGG16_no_preprocessing')
+    vit = VisionTransformer(in_channels = model_configs['c'],
+                        patch_size = model_configs['patch_size'],
+                        emb_size = model_configs['emb_size'],
+                        img_size = model_configs['h'],
+                        drop_p = model_configs['drop_rate'],
+                        forward_drop_p= model_configs['drop_rate'],
+                        num_heads = model_configs['num_heads'],
+                        n_blocks = model_configs['num_blocks'],
+                        n_classes = 1,
+                        device = torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+                        return_attn_weights=model_configs['return_attn_weights'])
+
+
+    # train_model(model=vit, model_name='ViT',dataset='cp-child-specnorm', out_dir='out/ViT_specnorm')
+    # train_model(model=vit, model_name='ViT',dataset='cp-child', out_dir='out/ViT_no_preprocessing')
+
+    # train_model(model=resnet18(), model_name='resnet18',dataset='cp-child-specnorm', out_dir='out/ResNet18_specnorm')
+    # train_model(model=resnet18(), model_name='resnet18',dataset='cp-child', out_dir='out/ResNet18_no_preprocessing')
+
+    train_model(model=resnet34(), model_name='resnet34',dataset='cp-child-specnorm', out_dir='out/ResNet34_specnorm')
+    train_model(model=resnet34(), model_name='resnet34',dataset='cp-child', out_dir='out/ResNet34_no_preprocessing')
